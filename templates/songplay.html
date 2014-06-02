@@ -1,0 +1,41 @@
+
+{% extends "layout.html" %}
+{% block content %}
+<script type="text/javascript">
+$(function() {
+    $("#but").bind( "click", function()
+    {
+        if(media.paused)
+            {
+                media.play();
+            }
+                else
+            {
+                media.pause();
+            }
+
+    }, false);
+
+
+});
+</script>
+
+
+
+
+<h3> {{ title }} </h3>
+    <ol class="breadcrumb">
+      <li><a href="/artists">Artists</a></li>
+      <li><a href="/albums/{{session.album.id}}">Albums</a></li>
+      <li><a href="/songs/{{session.song.album_id}}">Songs</a></li>
+      <li class="active">Play song</li>
+    </ol>
+
+        <audio controls autoplay>
+                <source src="/static/media/{{ song }}" type="audio/mp3">
+                Your browser does not support this audio format.
+        </audio>
+     <button id="but" type="button" class="btn btn-default">Left</button>
+
+        {{ session }}
+{% endblock %}

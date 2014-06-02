@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+    <script type="text/javascript">
+    $(function() {
+        $.get(
+            "/albumsList",
+            {id: $("#albumsList").attr("artist")},
+            function(data) {$("#albumsList").html( data );}
+        );
+    });
+
+
+    </script>
+
+    <h2>Albums</h2>
+
+    <ol class="breadcrumb">
+      <li><a href="/artists">Artists</a></li>
+      <li class="active">Albums</li>
+    </ol>
+
+    <div id="albumsList" artist="{{ artistid }}">
+
+    </div>
+
+{% endblock %}

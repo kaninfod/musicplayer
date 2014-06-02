@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block content %}
+    <script type="text/javascript">
+        $(function() {
+            $("#artistsList").load("/artistsList")
+        });
+    </script>
+
+    <h2>Artists</h2>
+
+    <ol class="breadcrumb">
+        <li class="active">Albums</li>
+    </ol>
+
+    <div id="artistsList">
+
+    </div>
+
+{% endblock %}
