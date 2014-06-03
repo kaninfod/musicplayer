@@ -3,6 +3,8 @@ from flask import Flask, render_template, request,session
 #import model.data
 from model.db import *
 import os
+import model.mgo
+from bson import ObjectId
 
 app = Flask(__name__)
 app.secret_key = 'development key'
@@ -142,6 +144,19 @@ def updatedb():
     #k=dbGet()
     #print("done")
 
+@app.route('/sg')
+def test():
+    q = {"album":ObjectId("53847b86936aa27d64003c9f")}
+    k = model.mgo.clssong(collection='song')
+    for i in k:
+        print(i)
+
+
+    if k.has_next():
+        k.page = k.page +1
+
+    for i in k.__iter__(page=3):
+        print(i)
 
 
 
