@@ -5,6 +5,7 @@ from model.db import *
 import os
 import model.mgo
 from bson import ObjectId
+from bson.json_util import dumps
 
 app = Flask(__name__)
 app.secret_key = 'development key'
@@ -120,6 +121,7 @@ def playsong(song_id):
     query["song_id"] = song_id
 
     data, page = db_get(query=query)
+    data = model.mgo.clssong(collection="song",query={'_id':ObjectId(song_id)})
     mediapath = "/home/martin/python/musicplayer/static/media/"
     songlink = "%s.mp3" % (data[0].id)
     songpath = mediapath + songlink
@@ -133,7 +135,7 @@ def playsong(song_id):
     return render_template('songplay.html',
                         title = data[0].songtitle, song=songlink)
 
-
+    #test
 
 @app.route('/updatedb')
 def updatedb():
