@@ -1,8 +1,7 @@
 from mutagenx.easyid3 import EasyID3
 import os
 from mongoengine import *
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+
 import json
 import math
 import re
@@ -94,19 +93,6 @@ def db_get(query):
             query["page"]["totaldocuments"] = len(collection.objects())
 
     elif query["collection"] == "song":
-        con = MongoClient()
-        db = con.songs
-        col = db.song
-        q = {}
-        if query["where"] != "None":
-            q['songtitle'] = query["where"]
-        if query["album_id"]:
-            q["album"] = ObjectId(query["album_id"])
-        if query["song_id"]:
-            q["_id"] = ObjectId(query["song_id"])
-
-
-        r = col.find(q)
 
         collection = song
         if query["where"] != "None":
