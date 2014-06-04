@@ -11,27 +11,27 @@
 
 
             $( "#loadNext" ).click(function() {
-                $.get( "/artistsList", {page: $("#loadNext").attr("lnk")}, function(data) {
+                $.get( "/artistsList", {page: parseInt($("#srv").attr("currentpage")) + 1}, function(data) {
                     $("#artistsList").html( data );
                     })
             });
                 $( "#loadPrev" ).click(function() {
-                $.get( "/artistsList", {page: $("#loadPrev").attr("lnk")}, function(data) {
+                $.get( "/artistsList", {page: parseInt($("#srv").attr("currentpage")) - 1}, function(data) {
                     $("#artistsList").html( data );
                     })
             });
 
 
-            if ($("#loadNext").attr("lnk") == 0) {
-                $("#loadNext").addClass("disabled");
+            if ($("#loadNext").attr("lnk")) {
+                $("#loadNext").removeClass("disabled");
             } else {
-                $("#loadNext").removeClass("disabled") ;
+                 $("#loadNext").addClass("disabled");
             }
 
-            if ($("#loadPrev").attr("lnk") == 0) {
-                $("#loadPrev").addClass("disabled");
+            if ($("#loadPrev").attr("lnk")) {
+                $("#loadPrev").removeClass("disabled");
             } else {
-                $("#loadPrev").removeClass("disabled") ;
+                $("#loadPrev").addClass("disabled");
             }
 
         });
@@ -43,9 +43,9 @@
 </div>
 
 <table class="table">
-    {% for item in data %}
+    {% for item in data.data %}
         <tr>
-            <td><a href="/albums/{{ item.id }} ">{{ item.albumartist }}</a> </td>
+            <td><a href="/albums/{{ item._id }} ">{{ item.albumartist }}</a> </td>
         </tr>
     {% endfor %}
 </table>
@@ -53,7 +53,9 @@
 
 
 <ul class="pager">
-  <li id="loadPrev" lnk="{{ query.page.previous }}" class="previous"><a href="#">&larr; Previous</a></li>
-  <li id="loadNext" lnk="{{ query.page.next }}" class="next"><a href="#">Next &rarr;</a></li>
+    <li id="loadPrev" lnk="{{ data.has_previous }}" class="previous"><a href="#">&larr; Previous</a></li>
+    <li id="loadNext" lnk="{{ data.has_next }}" class="next"><a href="#">Next &rarr;</a></li>
 </ul>
-{{ query.page }}
+<div id="srv" currentpage="{{ data.page }}"></div>
+
+

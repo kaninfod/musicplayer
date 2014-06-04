@@ -20,22 +20,20 @@ class clssong(object):
         self._min = 0 if self.page == 1 else (self.page - 1)*self.per_page
         self._max = self.page * self.per_page
 
-        self._data = col.find(self.query)[self._min:self._max]
-        self.total_documents = self._data.count()
+        self.data = col.find(self.query)[self._min:self._max]
+        self.total_documents = self.data.count()
+        self.has_next = self.page < self.total_pages()
+        self.has_previous = self.page > 1
 
     def total_pages(self):
         return int(ceil(self.total_documents / float(self.per_page)))
 
-    def has_next(self):
-        return self.page < self.total_pages()
 
-    def har_previous(self):
-        return self.page > 1
 
     def __iter__(self, page=False):
         if page:
             self.page = page
             self.get_data()
 
-        for item in self._data:
+        for item in self.data:
             yield item
