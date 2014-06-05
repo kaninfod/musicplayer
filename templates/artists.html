@@ -2,7 +2,13 @@
 {% block content %}
     <script type="text/javascript">
         $(function() {
-            $("#artistsList").load("/artistsList")
+
+            $( "#searchbox" ).keypress(function(event) {
+                if ( event.which == 13 ) {
+                    $(location).attr('href',"/artists/page/1?q=" + $("#searchbox").val());
+                }
+            });
+
         });
     </script>
 
@@ -11,6 +17,31 @@
     <ol class="breadcrumb">
         <li class="active">Albums</li>
     </ol>
+
+    <div class="input-group input-group-sm">
+        <span class="input-group-addon">search</span>
+        <input id="searchbox" class="form-control" value="{{q}}" >
+    </div>
+
+
+    <table class="table">
+    {% for item in data.data %}
+        <tr>
+            <td><a href="/albums/{{ item._id }} ">{{ item.albumartist }}</a> </td>
+        </tr>
+    {% endfor %}
+    </table>
+
+    <ul class="pager">
+        {% if data.has_previous %}
+        <li id="prev" lnk="{{ data.has_previous }}" class="previous"><a href="/artists/page/{{ page - 1 }}{{ '?q=%s' % q if q }}">&larr; Previous</a></li>
+        {% endif %}
+        {% if data.has_next %}
+        <li id="next" lnk="{{ data.has_next }}" class="next"><a href="/artists/page/{{ page + 1 }}{{ '?q=%s' % q if q }}">Next &rarr;</a></li>
+        {% endif %}
+    </ul>
+
+{{ '?q=%s' % q if q }}
 
     <div id="artistsList">
 

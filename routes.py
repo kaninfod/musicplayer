@@ -1,6 +1,7 @@
 from    model.db import add_collection, db_get
 from flask import Flask, render_template, request,session, url_for
 #import model.data
+import re
 from model.db import *
 import os
 import model.mgo
@@ -46,8 +47,20 @@ def songsList(id=""):
     return render_template('songsList.html', data=data, query=query)
 
 @app.route('/artists')
-def artists():
-    return render_template('artists.html')
+@app.route('/artists/page/<page>')
+def artists(page=1):
+    qstr = (request.args.get("q"))
+
+    if qstr:
+        query = {'albumartist':{'$regex':'%s' % (qstr),'$options': '-i'}}
+    else:
+        query = None
+        qstr = ""
+
+    page =int(page)
+    data = model.mgo.clssong(collection="artist", page=page, query=query)
+
+    return render_template('artists.html', data=data, page=page, q=qstr)
 
 @app.route('/artistsList', methods=['GET', 'POST'] )
 def artistsList():
@@ -77,7 +90,9 @@ def artistsList():
 
 
 @app.route('/albums')
-@app.route('/albums/<id>')
+@app.route('/albums/<id>') # to go
+@app.route('/albums/page/<page>/artist/<id>')
+@app.route('/albums/page/<page>')
 def albums(id = ""):
     return render_template('albums.html', artistid=id)
 

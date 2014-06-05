@@ -3,9 +3,9 @@
 
             $( "#searchbox" ).keypress(function(event) {
                 if ( event.which == 13 ) {
-                    $.get( "/artistsList", {where: $("#searchbox").val()}, function(data) {
-                        $("#artistsList").html( data );
-                    })
+                    alert('kaj')
+                    $(location).attr('href',"/artists");
+                    //$.get( "/artistsList", {where: $("#searchbox").val()})
                 }
             });
 

@@ -4,9 +4,12 @@ from math import ceil
 class clssong(object):
 
     def __init__(self, collection, query=None, per_page=10, page=1):
+
+
+
         self.query = query
         self.per_page = per_page
-        self.page = page
+        self.page = int(page)
         self.collection = collection
         self.get_data()
 
@@ -22,11 +25,11 @@ class clssong(object):
 
         self.data = col.find(self.query)[self._min:self._max]
         self.total_documents = self.data.count()
-        self.has_next = self.page < self.total_pages()
+        self.total_pages =  int(ceil(self.total_documents / float(self.per_page)))
+        self.has_next = self.page < self.total_pages
         self.has_previous = self.page > 1
 
-    def total_pages(self):
-        return int(ceil(self.total_documents / float(self.per_page)))
+
 
 
 
