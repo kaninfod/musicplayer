@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 from math import ceil
 
-class clssong(object):
+class getdata(object):
 
     def __init__(self, collection, query=None, per_page=10, page=1):
 

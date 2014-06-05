@@ -1,10 +1,10 @@
-from    model.db import add_collection, db_get
+from model.db import add_collection, db_get
 from flask import Flask, render_template, request,session, url_for
 #import model.data
 import re
 from model.db import *
 import os
-import model.mgo
+from model.mdb import getdata
 from bson import ObjectId
 from bson.json_util import dumps
 
@@ -58,7 +58,7 @@ def artists(page=1):
         qstr = ""
 
     page =int(page)
-    data = model.mgo.clssong(collection="artist", page=page, query=query)
+    data = getdata(collection="artist", page=page, query=query)
 
     return render_template('artists.html', data=data, page=page, q=qstr)
 
@@ -83,7 +83,7 @@ def artistsList():
     page = int(request.args.get("page", 1))
     data, query = db_get(query=query)
     q = {'artist':request.args.get("where")}
-    data = model.mgo.clssong(collection="artist", page=page, query=q)
+    data = model.mdb.clssong(collection="artist", page=page, query=q)
     session["artist"] =  query
 
     return render_template('artistsList.html', data=data, query=query)
@@ -139,7 +139,7 @@ def playsong(song_id):
     # query["song_id"] = song_id
 
     #response, page = db_get(query=query)
-    response = model.mgo.clssong(collection="song",query={'_id':ObjectId(song_id)})
+    response = model.mdb.clssong(collection="song",query={'_id':ObjectId(song_id)})
     song_object = response.data[0]
     mediapath = "/home/martin/python/musicplayer/static/media/"
     songlink = "%s.mp3" % (song_object['_id'])
@@ -170,7 +170,7 @@ def updatedb():
 @app.route('/sg')
 def test():
     q = {"album":ObjectId("53847b86936aa27d64003c9f")}
-    k = model.mgo.clssong(collection='song')
+    k = model.mdb.clssong(collection='song')
     for i in k:
         print(i)
 
