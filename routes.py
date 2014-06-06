@@ -1,12 +1,21 @@
-from model.db import add_collection, db_get
-from flask import Flask, render_template, request,session, url_for
-#import model.data
 import re
-from model.db import *
 import os
-from model.mdb import getdata
+
+from flask import Flask
+from flask import render_template
+from flask import request
+from flask import session
+from flask import url_for
+
 from bson import ObjectId
 from bson.json_util import dumps
+
+from model.db import *
+from model.db import add_collection
+from model.db import db_get
+
+from model.mdb import getdata
+
 
 app = Flask(__name__)
 app.secret_key = 'development key'
