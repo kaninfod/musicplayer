@@ -2,11 +2,14 @@
 {% block content %}
     <script type="text/javascript">
     $(function() {
-        $.get(
-            "/albumsList",
-            {id: $("#albumsList").attr("artist")},
-            function(data) {$("#albumsList").html( data );}
-        );
+
+        $( "#searchbox" ).keypress(function(event) {
+            if ( event.which == 13 ) {
+                $(location).attr('href',"/albums/page/1?q=" + $("#searchbox").val());
+            }
+        });
+
+        //$.get("/albumsList",{id: $("#albumsList").attr("artist")},function(data) {$("#albumsList").html( data );});
     });
 
 
@@ -18,6 +21,33 @@
       <li><a href="/artists">Artists</a></li>
       <li class="active">Albums</li>
     </ol>
+
+    <div class="input-group input-group-sm">
+        <span class="input-group-addon">search</span>
+        <input id="searchbox" class="form-control"  value="{{q}}" >
+    </div>
+
+
+
+    <table class="table">
+        {% for item in data.data %}
+            <tr>
+                <td>{{ item.albumtitle }}</td>
+                <td><a href="/songs/{{ item.id }} ">View songs</a> </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <ul class="pager">
+        {% if data.has_previous %}
+        <li id="prev" lnk="{{ data.has_previous }}" class="previous"><a href="{{ url_for_other_page(page=page - 1,q=q)}}">&larr; Previous</a></li>
+        {% endif %}
+        {% if data.has_next %}
+        <li id="next" lnk="{{ data.has_next }}" class="next"><a href="{{ url_for_other_page(page=page + 1,q=q)}}">Next &rarr;</a></li>
+        {% endif %}
+    </ul>
+
+
 
     <div id="albumsList" artist="{{ artistid }}">
 

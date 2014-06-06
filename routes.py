@@ -100,10 +100,35 @@ def artistsList():
 
 @app.route('/albums')
 @app.route('/albums/<id>') # to go
-@app.route('/albums/page/<page>/artist/<id>')
+@app.route('/albums/artist/<artist_id>/page/<page>')
 @app.route('/albums/page/<page>')
-def albums(id = ""):
-    return render_template('albums.html', artistid=id)
+def albums(page=1, artist_id=None):
+    qstr = (request.args.get("q",""))
+
+    if qstr:
+        query = {'albumtitle':{'$regex':'%s' % (qstr),'$options': '-i'}}
+    elif artist_id:
+        query = {'albumartist':ObjectId(artist_id)}
+    else:
+        query = None
+
+    page =int(page)
+    data = getdata(collection="album", page=page, query=query)
+
+    return render_template('albums.html', data=data, page=page, q=qstr)
+
+
+def url_for_other_page(**kwargs):
+    args = request.view_args.copy()
+    for key, value in kwargs.items():
+        #if args[key]:
+            args[key] = value
+    return url_for(request.endpoint, **args)
+
+
+
+
+
 
 @app.route('/albumsList')
 def albumsList():
@@ -196,6 +221,7 @@ def test():
 
 SERVER_NAME = "127.0.0.1"
 SERVER_PORT = 5001
+app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 if __name__ == '__main__':
     app.run(SERVER_NAME, SERVER_PORT, debug=False, threaded=True)
