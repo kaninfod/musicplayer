@@ -71,31 +71,6 @@ def artists(page=1):
 
     return render_template('artists.html', data=data, page=page, q=qstr)
 
-@app.route('/artistsList', methods=['GET', 'POST'] )
-def artistsList():
-    if  "artist" in session:
-        query = session["artist"]
-    else:
-        query = {
-            "collection":"artist",
-            "page":{
-                "current":1,
-                "pagesize":10
-            },
-            "where":"None"
-        }
-
-
-    query["page"]["current"] = int(request.args.get("page", query['page']['current']))
-    query["where"] = request.args.get("where", query['where'])
-
-    page = int(request.args.get("page", 1))
-    data, query = db_get(query=query)
-    q = {'artist':request.args.get("where")}
-    data = model.mdb.clssong(collection="artist", page=page, query=q)
-    session["artist"] =  query
-
-    return render_template('artistsList.html', data=data, query=query)
 
 
 @app.route('/albums')
@@ -124,35 +99,6 @@ def url_for_other_page(**kwargs):
         #if args[key]:
             args[key] = value
     return url_for(request.endpoint, **args)
-
-
-
-
-
-
-@app.route('/albumsList')
-def albumsList():
-    if "album" in session:
-        query = session["album"]
-    else:
-        query = {
-            "collection":"album",
-            "page":{
-                "current":1,
-                "pagesize":10
-            },
-            "where":"None",
-            "id":False
-        }
-
-    query['page']['current'] = int(request.args.get("page", query['page']['current']))
-    query["where"] = request.args.get("where", query['where'])
-    query["id"] = request.args.get("id",query['id'])
-
-    data, query = db_get(query=query)
-    session["album"]= query
-
-    return render_template('albumsList.html', data=data, query=query)
 
 @app.route('/playsong/<song_id>')
 def playsong(song_id):
