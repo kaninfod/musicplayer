@@ -1,5 +1,5 @@
-import re
-import os
+
+
 
 from flask import Flask
 from flask import render_template
@@ -10,11 +10,12 @@ from flask import url_for
 from bson import ObjectId
 from bson.json_util import dumps
 
+import model.db
 from model.db import *
 from model.db import add_collection
 from model.db import db_get
 
-from model.mdb import getdata
+from model.mdb import *
 
 
 app = Flask(__name__)
@@ -24,36 +25,6 @@ app.secret_key = 'development key'
 @app.route('/')
 def home():
     return render_template('home.html')
-
-
-@app.route('/songs')
-@app.route('/songs/<albumid>')
-def songs(albumid = ""):
-    return render_template('songs.html', albumid=albumid)
-
-@app.route('/songsList', methods=['GET', 'POST'] )
-def songsList(id=""):
-    if "song" in session:
-        query = session["song"]
-    else:
-        query = {
-            "collection":"song",
-            "page":{
-                "current":1,
-                "pagesize":10
-            },
-            "where":"None",
-            "id":""
-        }
-
-    query['page']['current'] = int(request.args.get("page", query['page']['current']))
-    query["where"] = request.args.get("where", query['where'])
-    query["album_id"] = request.args.get("album_id",query['id'])
-
-    data, query = db_get(query=query)
-    session["song"] = query
-
-    return render_template('songsList.html', data=data, query=query)
 
 @app.route('/artists')
 @app.route('/artists/page/<page>')
@@ -74,24 +45,59 @@ def artists(page=1):
 
 
 @app.route('/albums')
-@app.route('/albums/<id>') # to go
 @app.route('/albums/artist/<artist_id>/page/<page>')
+@app.route('/albums/artist/<artist_id>')
 @app.route('/albums/page/<page>')
 def albums(page=1, artist_id=None):
+    paginate = {}
+    paginate['page'] = int(page)
+    paginate['per_page'] = 10
+    paginate['min'] = 0 if paginate['page'] == 1 else (paginate['page'] - 1)*paginate['per_page']
+    paginate['max'] = paginate['page'] * paginate['per_page']
+
+
+    qstr = (request.args.get("q",""))
+    connect('songs', host='127.0.0.1', port=27017)
+    if qstr:
+        query = {'albumtitle':{'$regex':'%s' % (qstr),'$options': '-i'}}
+        data = model.db.album.objects(albumtitle__icontains=qstr)
+    elif artist_id:
+        query = {'albumartist':ObjectId(artist_id)}
+        data = model.db.album.objects(albumartist=artist_id)
+
+    else:
+        query = None
+
+    paginate['total_documents'] = data.count()
+    paginate['total_pages'] = int(ceil(paginate['total_documents'] / float(paginate['per_page'])))
+    paginate['has_next'] = paginate['page'] < paginate['total_pages']
+    paginate['has_previous'] = paginate['page'] > 1
+
+    data = data[paginate['min']:paginate['max']]
+
+
+    #data = getdata(collection="album", page=page, query=query)
+
+    return render_template('albums.html', data=data, paginate=paginate, q=qstr)
+
+@app.route('/songs')
+@app.route('/songs/album/<album_id>/page/<page>')
+@app.route('/songs/album/<album_id>')
+@app.route('/songs/page/<page>')
+def songs(page=1, album_id=""):
     qstr = (request.args.get("q",""))
 
     if qstr:
-        query = {'albumtitle':{'$regex':'%s' % (qstr),'$options': '-i'}}
-    elif artist_id:
-        query = {'albumartist':ObjectId(artist_id)}
+        query = {'songtitle':{'$regex':'%s' % (qstr),'$options': '-i'}}
+    elif album_id:
+        query = {'album':ObjectId(album_id)}
     else:
         query = None
 
     page =int(page)
-    data = getdata(collection="album", page=page, query=query)
+    data = getdata(collection="song", page=page, query=query)
 
-    return render_template('albums.html', data=data, page=page, q=qstr)
-
+    return render_template('songs.html', data=data, page=page, q=qstr)
 
 def url_for_other_page(**kwargs):
     args = request.view_args.copy()
@@ -100,26 +106,11 @@ def url_for_other_page(**kwargs):
             args[key] = value
     return url_for(request.endpoint, **args)
 
-@app.route('/playsong/<song_id>')
-def playsong(song_id):
-    # if "song" in session:
-    #     query = session["song"]
-    #     query["album_id"] = False
-    # else:
-    #     query = {
-    #         "collection":"song",
-    #         "page":{
-    #             "current":1,
-    #             "pagesize":10
-    #         },
-    #         "where":"None",
-    #         "song_id":False
-    #     }
-    #
-    # query["song_id"] = song_id
+@app.route('/playsong', methods=['GET', 'POST'])
+def playsong():
+    song_id = (request.args.get("song_id",""))
 
-    #response, page = db_get(query=query)
-    response = model.mdb.clssong(collection="song",query={'_id':ObjectId(song_id)})
+    response = getdata(collection="song",query={'_id':ObjectId(song_id)})
     song_object = response.data[0]
     mediapath = "/home/martin/python/musicplayer/static/media/"
     songlink = "%s.mp3" % (song_object['_id'])
@@ -133,33 +124,46 @@ def playsong(song_id):
         os.symlink(filepath, songpath)
 
 
-    return render_template('songplay.html',
-                        title = song_object['songtitle'], song=songlink)
+    return render_template('songplay.html', title = song_object['songtitle'], song=songlink)
 
-    #test
 
 @app.route('/updatedb')
 def updatedb():
-    m = music('kaj')
+    #m = music('kaj')
     #m.add_collection("/home/martin/Downloads/music", True)
     #m.add_collection("/media/store/Music")
     add_collection("/media/store/Music")
     #k=dbGet()
     #print("done")
 
-@app.route('/sg')
-def test():
-    q = {"album":ObjectId("53847b86936aa27d64003c9f")}
-    k = model.mdb.clssong(collection='song')
-    for i in k:
-        print(i)
+@app.route('/slugify/<s>')
+def slugify(s):
+    num_chars = 25
+    # remove all these words from the string before urlifying
+    #s = downcode(s)
+    removelist = ['a', 'an', 'as', 'at', 'before', 'but', 'by', 'for', 'from',
+                  'is', 'in', 'into', 'like', 'of', 'off', 'on', 'onto', 'per',
+                  'since', 'than', 'the', 'this', 'that', 'to', 'up', 'via',
+                  'with']
 
+    r = re.compile(r'\b(%s)\b' % '|'.join(removelist), re.I)
+    s = r.sub('', s)
 
-    if k.has_next():
-        k.page = k.page +1
+    # if downcode doesn't hit, the char will be stripped here
+    s = re.sub('[^-\w\s]', '', s)  # remove unneeded chars
+    s = s.strip()                  # trim leading/trailing spaces
+    s = re.sub('[-\s]+', '-', s)   # convert spaces to hyphens
+    s = s.lower()
 
-    for i in k.__iter__(page=3):
-        print(i)
+    # Trim the line if a character limit has been set.
+
+    d=song()
+    d.album.value = "test"
+    d.artist.value = "test1"
+    print(d.album)
+    d.save()
+    return s if not num_chars else s[:num_chars]
+
 
 
 
@@ -167,6 +171,7 @@ def test():
 
 SERVER_NAME = "127.0.0.1"
 SERVER_PORT = 5001
+app.config['MONGODB_SETTINGS']={'db':'songs','alias':'default'}
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 if __name__ == '__main__':

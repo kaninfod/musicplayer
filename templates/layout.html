@@ -60,8 +60,13 @@
     <!-- Main component for a primary marketing message or call to action -->
 
 <div class="row">
-  <div class="col-md-8">{% block content %}  {% endblock %}</div>
-  <div class="col-md-4">Side nav</div>
+  <div class="col-md-8">
+      {% block breadcrumb %} Here goes breadcrumb {% endblock %}
+      {% block content %} Here goes content {% endblock %}
+
+
+  </div>
+  <div id="mp" class="col-md-4"></div>
 </div>
 
 

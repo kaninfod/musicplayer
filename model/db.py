@@ -39,6 +39,8 @@ def add_collection(path, update=False):
     connect('songs', host='127.0.0.1', port=27017)
     for file in mp3_files(path):
         id3 = EasyID3(file)
+        _artist = artist()
+        _artist.albumartist = "kaj"
         try:
             try:
                 _artist = artist.objects.get(albumartist=id3['performer'][0])

@@ -1,0 +1,9 @@
+
+<ul class="pager">
+    {% if paginate.has_previous %}
+    <li id="prev" lnk="{{ paginate.has_previous }}" class="previous"><a href="{{ url_for_other_page(page=paginate.page - 1,q=q)}}">&larr; Previous</a></li>
+    {% endif %}
+    {% if paginate.has_next %}
+    <li id="next" lnk="{{ paginate.has_next }}" class="next"><a href="{{ url_for_other_page(page=paginate.page + 1,q=q)}}">Next &rarr;</a></li>
+    {% endif %}
+</ul>

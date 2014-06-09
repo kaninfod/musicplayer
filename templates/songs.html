@@ -1,12 +1,30 @@
 {% extends "layout.html" %}
+
+{% block breadcrumb %}
+    <ol class="breadcrumb">
+      <li><a href="/artists">Artists</a></li>
+      <li><a href="/albums/page/1">Albums</a></li>
+      <li class="active">Songs</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <script type="text/javascript">
     $(function() {
-        $.get(
-            "/songsList",
-            {album_id: $("#songsList").attr("album")},
-            function(data) {$("#songsList").html( data );}
-        );
+
+        $( "#searchbox" ).keypress(function(event) {
+            if ( event.which == 13 ) {
+                $(location).attr('href',"/songs/page/1?q=" + $("#searchbox").val());
+            }
+        });
+
+        $( "#search" ).click(function() {
+            $(location).attr('href',"/songs/page/1?q=" + $("#searchbox").val());
+        });
+
+
+
+
     });
 
 
@@ -14,16 +32,25 @@
 
     <h2>Songs</h2>
 
-    <ol class="breadcrumb">
-      <li><a href="/artists">Artists</a></li>
-      <li><a href="/albums/{{session.album.id}}">Albums</a></li>
-      <li class="active">Songs</li>
-    </ol>
+
+
+{% include 'searcher.html' %}
 
 
 
-    <div id="songsList"  album="{{ albumid }}">
+<table class="table">
+    {% for item in data.data %}
+        <tr>
+            <td>{{ item.tracknumber }}</td>
+            <td>{{ item.songtitle }}</td>
+            <td>{{ item.album.albumtitle }}</td>
+            <td>{{ item.artist }}</td>
+            <td><a class="song" id="{{ item._id }}" href="">Play</a> </td>
+            <td><a href="/albums?id={{ item.id }} ">View Albums</a> </td>
+        </tr>
+    {% endfor %}
+</table>
 
-    </div>
-{{ session.album.id}}
+{% include 'pager.html' %}
+
 {% endblock %}
