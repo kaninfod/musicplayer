@@ -1,6 +1,7 @@
 from mutagenx.easyid3 import EasyID3
 import os
 from mongoengine import *
+from math import ceil
 
 import json
 import math
@@ -133,4 +134,25 @@ def pagerange(page, pagesize):
         min = (page - 1)*pagesize
 
     return min,max
+
+
+class paginate():
+
+    def __init__(self, current_page=1, per_page=10):
+        self.current_page = int(current_page)
+        self.per_page = per_page
+        self.min = 0 if self.current_page == 1 else (self.current_page - 1)*self.per_page
+        self.max = self.current_page * self.per_page
+
+    @property
+    def total_documents(self):
+        return self._total_documents
+
+
+    @total_documents.setter
+    def total_documents(self, value):
+        self._total_documents = value
+        self.total_pages = int(ceil(self._total_documents / float(self.per_page)))
+        self.has_next = self.current_page < self.total_pages
+        self.has_previous = self.current_page > 1
 

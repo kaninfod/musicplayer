@@ -49,36 +49,21 @@ def artists(page=1):
 @app.route('/albums/artist/<artist_id>')
 @app.route('/albums/page/<page>')
 def albums(page=1, artist_id=None):
-    paginate = {}
-    paginate['page'] = int(page)
-    paginate['per_page'] = 10
-    paginate['min'] = 0 if paginate['page'] == 1 else (paginate['page'] - 1)*paginate['per_page']
-    paginate['max'] = paginate['page'] * paginate['per_page']
 
-
-    qstr = (request.args.get("q",""))
     connect('songs', host='127.0.0.1', port=27017)
+    p = paginate(page,10)
+    qstr = (request.args.get("q",""))
+
+
     if qstr:
-        query = {'albumtitle':{'$regex':'%s' % (qstr),'$options': '-i'}}
         data = model.db.album.objects(albumtitle__icontains=qstr)
     elif artist_id:
-        query = {'albumartist':ObjectId(artist_id)}
         data = model.db.album.objects(albumartist=artist_id)
 
-    else:
-        query = None
+    p.total_documents = data.count()
+    data = data[p.min:p.max]
 
-    paginate['total_documents'] = data.count()
-    paginate['total_pages'] = int(ceil(paginate['total_documents'] / float(paginate['per_page'])))
-    paginate['has_next'] = paginate['page'] < paginate['total_pages']
-    paginate['has_previous'] = paginate['page'] > 1
-
-    data = data[paginate['min']:paginate['max']]
-
-
-    #data = getdata(collection="album", page=page, query=query)
-
-    return render_template('albums.html', data=data, paginate=paginate, q=qstr)
+    return render_template('albums.html', data=data, paginate=p, q=qstr)
 
 @app.route('/songs')
 @app.route('/songs/album/<album_id>/page/<page>')
