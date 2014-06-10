@@ -36,7 +36,7 @@
         {% for item in data %}
             <tr>
                 <td>{{ item.albumtitle }}</td>
-                <td><a href="/songs/album/{{ item._id }} ">View songs</a> </td>
+                <td><a href="/songs/album/{{ item.id }} "><span class="label label-default">View Songs</span></a> </td>
             </tr>
         {% endfor %}
     </table>

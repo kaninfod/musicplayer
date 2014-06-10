@@ -39,14 +39,14 @@
 
 
 <table class="table">
-    {% for item in data.data %}
+    {% for item in data %}
         <tr>
-            <td>{{ item.tracknumber }}</td>
+            <td><span class="badge">{{ item.tracknumber }}</span></td>
             <td>{{ item.songtitle }}</td>
             <td>{{ item.album.albumtitle }}</td>
             <td>{{ item.artist }}</td>
-            <td><a class="song" id="{{ item._id }}" href="">Play</a> </td>
-            <td><a href="/albums?id={{ item.id }} ">View Albums</a> </td>
+            <td><a class="song" id="{{ item.id }}" href="">Play</a> </td>
+            <td><a href="/albums?id={{ item.id }} "><span class="label label-default">View Albums</span></a> </td>
         </tr>
     {% endfor %}
 </table>

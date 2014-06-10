@@ -1,26 +1,14 @@
-
-
-
 from flask import Flask
 from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
 
-from bson import ObjectId
-from bson.json_util import dumps
-
 import model.db
 from model.db import *
-from model.db import add_collection
-from model.db import db_get
-
-from model.mdb import *
-
 
 app = Flask(__name__)
 app.secret_key = 'development key'
-
 
 @app.route('/')
 def home():
@@ -29,18 +17,20 @@ def home():
 @app.route('/artists')
 @app.route('/artists/page/<page>')
 def artists(page=1):
-    qstr = (request.args.get("q"))
+
+    connect('songs', host='127.0.0.1', port=27017)
+    p = paginate(page,10)
+    qstr = (request.args.get("q",""))
 
     if qstr:
-        query = {'albumartist':{'$regex':'%s' % (qstr),'$options': '-i'}}
+        data = model.db.artist.objects(albumartist__icontains=qstr)
     else:
-        query = None
-        qstr = ""
+        data = model.db.artist.objects()
 
-    page =int(page)
-    data = getdata(collection="artist", page=page, query=query)
+    p.total_documents = data.count()
+    data = data[p.min:p.max]
 
-    return render_template('artists.html', data=data, page=page, q=qstr)
+    return render_template('artists.html', data=data, paginate=p, q=qstr)
 
 
 
@@ -59,6 +49,8 @@ def albums(page=1, artist_id=None):
         data = model.db.album.objects(albumtitle__icontains=qstr)
     elif artist_id:
         data = model.db.album.objects(albumartist=artist_id)
+    else:
+        data = model.db.album.objects()
 
     p.total_documents = data.count()
     data = data[p.min:p.max]
@@ -70,19 +62,22 @@ def albums(page=1, artist_id=None):
 @app.route('/songs/album/<album_id>')
 @app.route('/songs/page/<page>')
 def songs(page=1, album_id=""):
+
+    connect('songs', host='127.0.0.1', port=27017)
+    p = paginate(page,10)
     qstr = (request.args.get("q",""))
 
     if qstr:
-        query = {'songtitle':{'$regex':'%s' % (qstr),'$options': '-i'}}
+        data = model.db.song.objects(songtitle__icontains=qstr)
     elif album_id:
-        query = {'album':ObjectId(album_id)}
+        data = model.db.song.objects(album=album_id).order_by('tracknumber')
     else:
-        query = None
+        data = model.db.song.objects()
 
-    page =int(page)
-    data = getdata(collection="song", page=page, query=query)
+    p.total_documents = data.count()
+    data = data[p.min:p.max]
 
-    return render_template('songs.html', data=data, page=page, q=qstr)
+    return render_template('songs.html', data=data, paginate=p, q=qstr)
 
 def url_for_other_page(**kwargs):
     args = request.view_args.copy()
@@ -117,7 +112,7 @@ def updatedb():
     #m = music('kaj')
     #m.add_collection("/home/martin/Downloads/music", True)
     #m.add_collection("/media/store/Music")
-    add_collection("/media/store/Music")
+    model.db.add_collection("/media/store/Music")
     #k=dbGet()
     #print("done")
 
@@ -141,14 +136,6 @@ def slugify(s):
     s = s.lower()
 
     # Trim the line if a character limit has been set.
-
-    d=song()
-    d.album.value = "test"
-    d.artist.value = "test1"
-    print(d.album)
-    d.save()
-    return s if not num_chars else s[:num_chars]
-
 
 
 
