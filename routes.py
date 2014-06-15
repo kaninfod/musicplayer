@@ -25,7 +25,7 @@ def artists(page=1):
     if qstr:
         data = model.db.artist.objects(albumartist__icontains=qstr)
     else:
-        data = model.db.artist.objects()
+        data = model.db.artist.objects().order_by('albumartist')
 
     p.total_documents = data.count()
     data = data[p.min:p.max]
@@ -142,7 +142,7 @@ def slugify(s):
 
 
 SERVER_NAME = "127.0.0.1"
-SERVER_PORT = 5001
+SERVER_PORT = 5000
 app.config['MONGODB_SETTINGS']={'db':'songs','alias':'default'}
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
