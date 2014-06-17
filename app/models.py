@@ -3,7 +3,7 @@ import os
 from app import db
 from math import ceil
 import time
-
+from app import session,cache
 
 
 class artist(db.Document):
@@ -55,6 +55,7 @@ class paginate():
 def add_collection(path):
     for file in mp3_files(path):
         add_file_to_db(file)
+    cache['songcounter'] = -1
 
 def mp3_files(path):
     for root, subFolders, files in os.walk(path, topdown=False):
@@ -67,7 +68,6 @@ def mp3_files(path):
 def add_file_to_db(file, update=False):
 
     #connect('songs', host='127.0.0.1', port=27017)
-
     id3_template = ['performer',                #maps to: albumartist
                  'album',                       #maps to: albumtitle
                  'title',                       #maps to: songtitle
@@ -131,7 +131,7 @@ def add_file_to_db(file, update=False):
     _song.save()
 
     print("%s    %s   -   %s" % (time.strftime("%I:%M:%S"),id3['title'], id3['performer']))
-    #g.test = "%s    %s   -   %s" % (time.strftime("%I:%M:%S"),id3['title'], id3['performer'])
+    cache['songcounter'] = cache['songcounter'] +1
 
 
 

@@ -1,22 +1,22 @@
-from app import app,models
+from app import app, models
 from flask import render_template
 from flask import request
 from flask import url_for
+from app import session, cache
+
 import time
 
 
 
 @app.route('/')
 def home():
+
     return render_template('home.html')
 
 @app.route('/artists')
 @app.route('/artists/page/<page>')
 def artists(page=1):
 
-
-
-    qstr = (request.args.get("q",""))
 
     if qstr:
         data = models.artist.objects(albumartist__icontains=qstr)
@@ -107,13 +107,23 @@ def playsong():
 @app.route('/updatedb')
 def updatedb():
 
-    models.add_collection("/media/store/Music")
-    return
+    cache['songcounter'] = 0
+    models.add_collection("/media/store/Music/Bruce Springsteen")
+    return 0
+
+
+
 
 @app.route('/dbstatus')
 def dbstatus():
-    k = time.strftime("%I:%M:%S")
-    return render_template("dbstatus.html", timestamp=k)
+    try:
+        cache['songcounter']
+    except KeyError:
+        return -1
+        #return render_template("dbstatus.html", status= -1)
+    else:
+        return cache['songcounter']
+        #return render_template("dbstatus.html", status=cache['songcounter'])
 
 
 @app.route('/slugify/<s>')
