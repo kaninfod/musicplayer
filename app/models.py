@@ -29,115 +29,95 @@ class song(db.Document):
     musicbrainz_trackid = db.StringField()
     filepath = db.StringField(required=False)
 
-
-
-
-
-
-
-def add_collection(path):
-    for file in mp3_files(path):
-        add_file_to_db(file)
-
-
-def mp3_files(path):
-    for root, subFolders, files in os.walk(path, topdown=False):
-        for f in files:
-            if f.endswith("mp3"):
-                yield os.path.join(root, f)
-
-
 class mp3_file(object):
     def __init__(self, file, update=False):
 
-
-def add_file_to_db(file, update=False):
-
-    _id3 = id3(file)
-
-    _artist = add_update_artist(_id3)
-    _id3.performer = _artist
-    _album = add_update_album(_id3)
-    _id3.album = _album
-    _song = add_update_song(_id3)
-
-    print("%s    %s   -   %s" % (time.strftime("%I:%M:%S"),_id3.title, _id3.performer))
-
-def add_update_artist(id3):
-
-    if (id3.performer == None or id3.album == None or id3.title == None):
-        return
-
-    if artist.objects(albumartist=id3.performer).first() == None:
-        _artist = artist()
-    else:
-        _artist = artist.objects(albumartist=id3.performer).first()
-
-    _artist.albumartist = id3.performer
-    _artist.musicbrainz_artistid = id3.musicbrainz_artistid
-    _artist.save()
-    return _artist
-
-def add_update_album(id3):
-    if album.objects(albumtitle=id3.album).first() == None:
-        _album = album()
-    else:
-        _album = album.objects(albumtitle=id3.album).first()
-
-    _album.albumtitle = id3.album
-    _album.musicbrainz_albumid = id3.musicbrainz_albumid
-    _album.musicbrainz_albumartistid = id3.musicbrainz_albumartistid
-    _album.albumartist = id3.performer
-    _album.save()
-    return _album
-
-def add_update_song(id3):
-    if song.objects(songtitle=id3.title, albumartist=id3.performer, album=id3.album).first() == None:
-        _song = song()
-    else:
-        _song = song.objects(songtitle=id3.title, albumartist=id3.performer, album=id3.album).first()
-
-    _song.songtitle=id3.title
-    _song.albumartist = id3.performer
-    _song.album = id3.album
-    _song.artist = id3.artist
-    _song.tracknumber = id3.tracknumber
-    _song.musicbrainz_trackid = id3.musicbrainz_trackid
-    _song.filepath = id3.filepath
-    _song.save()
-    return _song
+        _id3 = self.id3(file)
+    
+        self.artist = self.add_update_artist(_id3)
+        _id3.performer = self.artist
+        self.album = self.add_update_album(_id3)
+        _id3.album = self.album
+        self.song = self.add_update_song(_id3)
+    
 
 
-class id3(object):
+    def add_update_artist(self, id3):
+    
+        if (id3.performer == None or id3.album == None or id3.title == None):
+            return
+    
+        if artist.objects(albumartist=id3.performer).first() == None:
+            self.artist = artist()
+        else:
+            self.artist = artist.objects(albumartist=id3.performer).first()
+    
+        self.artist.albumartist = id3.performer
+        self.artist.musicbrainz_artistid = id3.musicbrainz_artistid
+        self.artist.save()
+        return self.artist
+    
+    def add_update_album(self, id3):
+        if album.objects(albumtitle=id3.album).first() == None:
+            self.album = album()
+        else:
+            self.album = album.objects(albumtitle=id3.album).first()
+    
+        self.album.albumtitle = id3.album
+        self.album.musicbrainz_albumid = id3.musicbrainz_albumid
+        self.album.musicbrainz_albumartistid = id3.musicbrainz_albumartistid
+        self.album.albumartist = id3.performer
+        self.album.save()
+        return self.album
+    
+    def add_update_song(self, id3):
+        if song.objects(songtitle=id3.title, albumartist=id3.performer, album=id3.album).first() == None:
+            self.song = song()
+        else:
+            self.song = song.objects(songtitle=id3.title, albumartist=id3.performer, album=id3.album).first()
+    
+        self.song.songtitle=id3.title
+        self.song.albumartist = id3.performer
+        self.song.album = id3.album
+        self.song.artist = id3.artist
+        self.song.tracknumber = id3.tracknumber
+        self.song.musicbrainz_trackid = id3.musicbrainz_trackid
+        self.song.filepath = id3.filepath
+        self.song.save()
+        return self.song
 
-    def __init__(self, mp3_file):
-        self.performer = None                    #maps to: albumartist
-        self.album = None                      #maps to: albumtitle
-        self.title = None                      #maps to: songtitle
-        self.tracknumber = None                #maps to: same
-        self.artist = None                     #maps to:
-        self.musicbrainz_albumartistid = None  #maps to: same
-        self.musicbrainz_albumid = None        #maps to: same
-        self.musicbrainz_artistid = None       #maps to: same
-        self.musicbrainz_releasegroupid = None #maps to: same
-        self.musicbrainz_trackid = None        #maps to: same
-        self.totaltracks = None                #maps to: same
-        self.filepath = mp3_file
+
+    class id3(object):
 
 
-        id3_file = EasyID3(mp3_file)
+        def __init__(self, mp3_file):
+            self.performer = None                    #maps to: albumartist
+            self.album = None                      #maps to: albumtitle
+            self.title = None                      #maps to: songtitle
+            self.tracknumber = None                #maps to: same
+            self.artist = None                     #maps to:
+            self.musicbrainz_albumartistid = None  #maps to: same
+            self.musicbrainz_albumid = None        #maps to: same
+            self.musicbrainz_artistid = None       #maps to: same
+            self.musicbrainz_releasegroupid = None #maps to: same
+            self.musicbrainz_trackid = None        #maps to: same
+            self.totaltracks = None                #maps to: same
+            self.filepath = mp3_file
 
-        for item in self.__dict__:
-            self.__dict__[item] = self.get_id3_item(item,id3_file)
+
+            id3_file = EasyID3(mp3_file)
+
+            for item in self.__dict__:
+                self.__dict__[item] = self.get_id3_item(item,id3_file)
 
 
-    def get_id3_item(self, item, id3):
-        try:
-            val = id3[item][0]
-        except Exception as e:
-            val = None
+        def get_id3_item(self, item, id3):
+            try:
+                val = id3[item][0]
+            except Exception as e:
+                val = None
 
-        return val
+            return val
 
 class paginate():
 
@@ -158,3 +138,16 @@ class paginate():
         self.total_pages = int(ceil(self._total_documents / float(self.per_page)))
         self.has_next = self.current_page < self.total_pages
         self.has_previous = self.current_page > 1
+
+
+
+def add_collection(path):
+    for file in mp3_files(path):
+        mp3_obj = mp3_file(file)
+        print("%s    %s   -   %s" % (time.strftime("%I:%M:%S"), mp3_obj.song.songtitle, mp3_obj.artist.albumartist))
+
+def mp3_files(path):
+    for root, subFolders, files in os.walk(path, topdown=False):
+        for f in files:
+            if f.endswith("mp3"):
+                yield os.path.join(root, f)

@@ -2,22 +2,17 @@ from app import app, models
 from flask import render_template
 from flask import request
 from flask import url_for
-from app import session
 
 import time
 
-
-
 @app.route('/')
 def home():
-
     return render_template('home.html')
+
 
 @app.route('/artists')
 @app.route('/artists/page/<page>')
 def artists(page=1):
-
-
     if qstr:
         data = models.artist.objects(albumartist__icontains=qstr)
     else:
@@ -28,8 +23,6 @@ def artists(page=1):
     data = data[p.min:p.max]
 
     return render_template('artists.html', data=data, paginate=p, q=qstr)
-
-
 
 @app.route('/albums')
 @app.route('/albums/artist/<artist_id>/page/<page>')
@@ -107,7 +100,6 @@ def playsong():
 @app.route('/updatedb')
 def updatedb():
 
-    cache = 0
     models.add_collection("/media/store/Music/Bruce Springsteen")
     return 0
 
