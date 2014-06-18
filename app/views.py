@@ -13,6 +13,8 @@ def home():
 @app.route('/artists')
 @app.route('/artists/page/<page>')
 def artists(page=1):
+
+    qstr = (request.args.get("q",""))
     if qstr:
         data = models.artist.objects(albumartist__icontains=qstr)
     else:
@@ -31,7 +33,7 @@ def artists(page=1):
 def albums(page=1, artist_id=None):
 
 
-    p = models.paginate(page,10)
+
     qstr = (request.args.get("q",""))
 
 
@@ -42,6 +44,7 @@ def albums(page=1, artist_id=None):
     else:
         data = models.album.objects()
 
+    p = models.paginate(page,10)
     p.total_documents = data.count()
     data = data[p.min:p.max]
 
@@ -54,7 +57,6 @@ def albums(page=1, artist_id=None):
 def songs(page=1, album_id=""):
 
 
-    p = models.paginate(page,10)
     qstr = (request.args.get("q",""))
 
     if qstr:
@@ -64,6 +66,7 @@ def songs(page=1, album_id=""):
     else:
         data = models.song.objects()
 
+    p = models.paginate(page,10)
     p.total_documents = data.count()
     data = data[p.min:p.max]
 
@@ -72,7 +75,6 @@ def songs(page=1, album_id=""):
 def url_for_other_page(**kwargs):
     args = request.view_args.copy()
     for key, value in kwargs.items():
-        #if args[key]:
             args[key] = value
     return url_for(request.endpoint, **args)
 
@@ -102,6 +104,11 @@ def updatedb():
 
     models.add_collection("/media/store/Music/Bruce Springsteen")
     return 0
+
+@app.route('/sg/<song_id>')
+def sg(song_id):
+    sng = models.song.objects(id=song_id).first()
+    models.musicbrainz(sng)
 
 
 

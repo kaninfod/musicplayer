@@ -1,4 +1,5 @@
 from mutagenx.easyid3 import EasyID3, EasyID3KeyError
+import musicbrainzngs
 import os
 from app import db
 from math import ceil
@@ -151,3 +152,24 @@ def mp3_files(path):
         for f in files:
             if f.endswith("mp3"):
                 yield os.path.join(root, f)
+
+
+class musicbrainz(object):
+
+    def __init__(self, song):
+        self.song = song
+        musicbrainzngs.set_useragent(
+            "python-musicplayer-flask",
+            "0.1",
+            "martinhinge@gmail.com"
+            )
+        result = musicbrainzngs.get_artist_by_id(song.albumartist.musicbrainz_artistid)
+        print(result)
+        result = musicbrainzngs.get_recording_by_id(song.musicbrainz_trackid)
+        print(result)
+
+        result = musicbrainzngs.get_release_by_id(song.album.musicbrainz_albumid)
+        print(result)
+        data = musicbrainzngs.get_cover_art_list(song.album.musicbrainz_albumid)
+        pass
+
