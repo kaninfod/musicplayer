@@ -2,7 +2,7 @@ from app import app, models
 from flask import render_template
 from flask import request
 from flask import url_for
-from app import session, cache
+from app import session
 
 import time
 
@@ -107,7 +107,7 @@ def playsong():
 @app.route('/updatedb')
 def updatedb():
 
-    cache['songcounter'] = 0
+    cache = 0
     models.add_collection("/media/store/Music/Bruce Springsteen")
     return 0
 
@@ -117,12 +117,12 @@ def updatedb():
 @app.route('/dbstatus')
 def dbstatus():
     try:
-        cache['songcounter']
+        cache
     except KeyError:
-        return -1
+        return "-1"
         #return render_template("dbstatus.html", status= -1)
     else:
-        return cache['songcounter']
+        return str(cache)
         #return render_template("dbstatus.html", status=cache['songcounter'])
 
 

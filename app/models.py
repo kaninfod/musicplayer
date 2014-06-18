@@ -3,7 +3,7 @@ import os
 from app import db
 from math import ceil
 import time
-from app import session,cache
+
 
 
 class artist(db.Document):
@@ -30,6 +30,115 @@ class song(db.Document):
     filepath = db.StringField(required=False)
 
 
+
+
+
+
+
+def add_collection(path):
+    for file in mp3_files(path):
+        add_file_to_db(file)
+
+
+def mp3_files(path):
+    for root, subFolders, files in os.walk(path, topdown=False):
+        for f in files:
+            if f.endswith("mp3"):
+                yield os.path.join(root, f)
+
+
+class mp3_file(object):
+    def __init__(self, file, update=False):
+
+
+def add_file_to_db(file, update=False):
+
+    _id3 = id3(file)
+
+    _artist = add_update_artist(_id3)
+    _id3.performer = _artist
+    _album = add_update_album(_id3)
+    _id3.album = _album
+    _song = add_update_song(_id3)
+
+    print("%s    %s   -   %s" % (time.strftime("%I:%M:%S"),_id3.title, _id3.performer))
+
+def add_update_artist(id3):
+
+    if (id3.performer == None or id3.album == None or id3.title == None):
+        return
+
+    if artist.objects(albumartist=id3.performer).first() == None:
+        _artist = artist()
+    else:
+        _artist = artist.objects(albumartist=id3.performer).first()
+
+    _artist.albumartist = id3.performer
+    _artist.musicbrainz_artistid = id3.musicbrainz_artistid
+    _artist.save()
+    return _artist
+
+def add_update_album(id3):
+    if album.objects(albumtitle=id3.album).first() == None:
+        _album = album()
+    else:
+        _album = album.objects(albumtitle=id3.album).first()
+
+    _album.albumtitle = id3.album
+    _album.musicbrainz_albumid = id3.musicbrainz_albumid
+    _album.musicbrainz_albumartistid = id3.musicbrainz_albumartistid
+    _album.albumartist = id3.performer
+    _album.save()
+    return _album
+
+def add_update_song(id3):
+    if song.objects(songtitle=id3.title, albumartist=id3.performer, album=id3.album).first() == None:
+        _song = song()
+    else:
+        _song = song.objects(songtitle=id3.title, albumartist=id3.performer, album=id3.album).first()
+
+    _song.songtitle=id3.title
+    _song.albumartist = id3.performer
+    _song.album = id3.album
+    _song.artist = id3.artist
+    _song.tracknumber = id3.tracknumber
+    _song.musicbrainz_trackid = id3.musicbrainz_trackid
+    _song.filepath = id3.filepath
+    _song.save()
+    return _song
+
+
+class id3(object):
+
+    def __init__(self, mp3_file):
+        self.performer = None                    #maps to: albumartist
+        self.album = None                      #maps to: albumtitle
+        self.title = None                      #maps to: songtitle
+        self.tracknumber = None                #maps to: same
+        self.artist = None                     #maps to:
+        self.musicbrainz_albumartistid = None  #maps to: same
+        self.musicbrainz_albumid = None        #maps to: same
+        self.musicbrainz_artistid = None       #maps to: same
+        self.musicbrainz_releasegroupid = None #maps to: same
+        self.musicbrainz_trackid = None        #maps to: same
+        self.totaltracks = None                #maps to: same
+        self.filepath = mp3_file
+
+
+        id3_file = EasyID3(mp3_file)
+
+        for item in self.__dict__:
+            self.__dict__[item] = self.get_id3_item(item,id3_file)
+
+
+    def get_id3_item(self, item, id3):
+        try:
+            val = id3[item][0]
+        except Exception as e:
+            val = None
+
+        return val
+
 class paginate():
 
     def __init__(self, current_page=1, per_page=10):
@@ -49,159 +158,3 @@ class paginate():
         self.total_pages = int(ceil(self._total_documents / float(self.per_page)))
         self.has_next = self.current_page < self.total_pages
         self.has_previous = self.current_page > 1
-
-
-
-def add_collection(path):
-    for file in mp3_files(path):
-        add_file_to_db(file)
-    cache['songcounter'] = -1
-
-def mp3_files(path):
-    for root, subFolders, files in os.walk(path, topdown=False):
-        for f in files:
-            if f.endswith("mp3"):
-                yield os.path.join(root, f)
-
-
-
-def add_file_to_db(file, update=False):
-
-    #connect('songs', host='127.0.0.1', port=27017)
-    id3_template = ['performer',                #maps to: albumartist
-                 'album',                       #maps to: albumtitle
-                 'title',                       #maps to: songtitle
-                 'tracknumber',                 #maps to: same
-                 'artist',                      #maps to:
-                 'musicbrainz_albumartistid',   #maps to: same
-                 'musicbrainz_albumid',         #maps to: same
-                 'musicbrainz_artistid',        #maps to: same
-                 'musicbrainz_releasegroupid',  #maps to: same
-                 'musicbrainz_trackid',         #maps to: same
-                 'totaltracks',                 #maps to: same
-                ]
-
-
-    id3_file = EasyID3(file)
-    id3_info = []
-
-    for item in id3_template:
-        id3_info.append(get_id3_item(item, id3_file))
-
-    id3 = dict(zip(id3_template,id3_info))
-
-    if (id3['performer'] == None or id3['album'] == None or id3['title'] == None):
-        return
-
-    if artist.objects(albumartist=id3['performer']).first() == None:
-        _artist = artist()
-    else:
-        _artist = artist.objects(albumartist=id3['performer']).first()
-
-    _artist.albumartist = id3['performer']
-    _artist.musicbrainz_artistid = id3['musicbrainz_artistid']
-    _artist.save()
-
-
-    if album.objects(albumtitle=id3['album']).first() == None:
-        _album = album()
-    else:
-        _album = album.objects(albumtitle=id3['album']).first()
-
-    _album.albumtitle = id3['album']
-    _album.musicbrainz_albumid = id3['musicbrainz_albumid']
-    _album.musicbrainz_albumartistid = id3['musicbrainz_albumartistid']
-    _album.albumartist = _artist
-    _album.save()
-
-
-
-    if song.objects(songtitle=id3['title'], albumartist=_artist, album=_album).first() == None:
-        _song = song()
-    else:
-        _song = song.objects(songtitle=id3['title'], albumartist=_artist, album=_album).first()
-
-    _song.songtitle=id3['title']
-    _song.albumartist = _artist
-    _song.album = _album
-    _song.artist = id3['artist']
-    _song.tracknumber = id3['tracknumber']
-    _song.musicbrainz_trackid = id3['musicbrainz_trackid']
-    _song.filepath = file
-    _song.save()
-
-    print("%s    %s   -   %s" % (time.strftime("%I:%M:%S"),id3['title'], id3['performer']))
-    cache['songcounter'] = cache['songcounter'] +1
-
-
-
-def get_id3_item(item, id3):
-    try:
-        val = id3[item][0]
-    except Exception as e:
-        val = None
-
-    return val
-
-# def db_get(query):
-#     connect('songs', host='127.0.0.1', port=27017)
-#     itemfrom, itemto = pagerange(int(query["page"]["current"]), int(query["page"]["pagesize"]))
-#
-#     if query["collection"] == "artist":
-#         collection = artist
-#         if query["where"] != "None":
-#             data = collection.objects(albumartist__icontains=query["where"])
-#         else:
-#             data = collection.objects[itemfrom:itemto]
-#             query["page"]["totaldocuments"] = len(collection.objects())
-#     elif query["collection"] == "album":
-#         collection = album
-#         if query["where"] != "None":
-#             data = collection.objects(albumtitle__icontains=query["where"])[itemfrom:itemto]
-#             query["page"]["totaldocuments"] = len(collection.objects(albumtitle__icontains=query["where"]))
-#         elif id:
-#             data = collection.objects(albumartist=query["id"])[itemfrom:itemto]
-#             query["page"]["totaldocuments"] = len(collection.objects(albumartist=query["id"]))
-#         else:
-#             data = collection.objects[itemfrom:itemto]
-#             query["page"]["totaldocuments"] = len(collection.objects())
-#
-#     elif query["collection"] == "song":
-#
-#         collection = song
-#         if query["where"] != "None":
-#             data = collection.objects(songtitle__icontains=query["where"])[itemfrom:itemto]
-#             query["page"]["totaldocuments"] = len(collection.objects(songtitle__icontains=query["where"]))
-#         elif query["album_id"]:
-#             data = collection.objects(album=query["album_id"])[itemfrom:itemto]
-#             query["page"]["totaldocuments"] = len(collection.objects(album=query["id"]))
-#         elif query["song_id"]:
-#             data = collection.objects(id=query["song_id"])
-#             query["page"]["totaldocuments"] = len(collection.objects(id=query["id"]))
-#         else:
-#             data = collection.objects[itemfrom:itemto]
-#             query["page"]["totaldocuments"] = len(collection.objects())
-#
-#
-#     query = pageobj(query, collection)
-#     return data,query
-
-
-# def pageobj(query, collection):
-#     connect('songs', host='127.0.0.1', port=27017)
-#
-#     query["page"]["totalpages"] = math.ceil(query["page"]["totaldocuments"]/query["page"]["pagesize"])
-#     query["page"]["next"] = query["page"]["current"] + 1 if query["page"]["current"] < query["page"]["totalpages"] else 0
-#     query["page"]["previous"] = query["page"]["current"] - 1 if query["page"]["current"] != 1 else 0
-#     #_pages = {x:'Page %s' % (x) for x in range(1,_totalpages)}
-#     return query
-#
-#
-# def pagerange(page, pagesize):
-#     max = page * pagesize
-#     if page == 1:
-#         min = 0
-#     else:
-#         min = (page - 1)*pagesize
-#
-#     return min,max

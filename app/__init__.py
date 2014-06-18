@@ -9,7 +9,7 @@ app.config["SECRET_KEY"] = "KeepThisS3cr3t"
 db = MongoEngine(app)
 
 global cache
-cache = {}
+cache = -1
 from app import views, models
 
 
