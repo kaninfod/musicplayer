@@ -8,8 +8,7 @@ app.config["MONGODB_SETTINGS"] = {'DB': "songs"}
 app.config["SECRET_KEY"] = "KeepThisS3cr3t"
 db = MongoEngine(app)
 
-global cache
-cache = -1
+
 from app import views, models
 
 
