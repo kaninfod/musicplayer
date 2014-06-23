@@ -56,7 +56,6 @@ def albums(page=1, artist_id=None):
 @app.route('/songs/page/<page>')
 def songs(page=1, album_id=""):
 
-
     qstr = (request.args.get("q",""))
 
     if qstr:
@@ -70,7 +69,16 @@ def songs(page=1, album_id=""):
     p.total_documents = data.count()
     data = data[p.min:p.max]
 
-    return render_template('songs.html', data=data, paginate=p, q=qstr)
+
+    try:
+        #mb = models.musicbrainz(data[0].album)
+        album = data[0].album
+        cover_url = album.get_coverart_url()
+        cover_url = "/static/media/%s" % (cover_url)
+    except Exception as e:
+        cover_url = "/static/img/generic_album_cover.jpg"
+
+    return render_template('songs.html', data=data, paginate=p, q=qstr, url=cover_url)
 
 def url_for_other_page(**kwargs):
     args = request.view_args.copy()
@@ -102,13 +110,17 @@ def playsong():
 @app.route('/updatedb')
 def updatedb():
 
-    models.add_collection("/media/store/Music/Bruce Springsteen")
+    models.add_collection("/media/store/Music")
     return 0
 
-@app.route('/sg/<song_id>')
-def sg(song_id):
-    sng = models.song.objects(id=song_id).first()
-    models.musicbrainz(sng)
+@app.route('/sg/<album_id>')
+def sg(album_id):
+    sng = models.album.objects(id=album_id).first()
+    mb = models.musicbrainz(sng)
+    mb.get_coverart()
+    url = mb.get_coverart_url()
+
+    return render_template('showimg.html', img = "static/media/%s" % (url))
 
 
 

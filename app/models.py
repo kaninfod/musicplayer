@@ -1,9 +1,13 @@
+
 from mutagenx.easyid3 import EasyID3, EasyID3KeyError
 import musicbrainzngs
 import os
 from app import db
+from app import cache
 from math import ceil
 import time
+import urllib
+import PIL
 
 
 
@@ -19,6 +23,24 @@ class album(db.Document):
     albumartist = db.ReferenceField(artist)
     musicbrainz_albumartistid = db.StringField()
     musicbrainz_albumid = db.StringField()
+    coverimage =db.ImageField()
+
+    def get_coverart_url(self):
+        path = "app/static/media/"
+        filename = "%s.jpg" % self.id
+
+        if not self.coverimage.size:
+            raise NameError("No image in DB")
+        imgdata = self.coverimage.read()
+        if not imgdata:
+            raise NameError("No image in DB")
+        b_imagedata = bytes(imgdata)
+        output = open("%s%s" % (path, filename), "wb")
+        output.write(b_imagedata)
+        return filename
+
+
+
 
 class song(db.Document):
     id = db.UUIDField()
@@ -34,7 +56,9 @@ class mp3_file(object):
     def __init__(self, file, update=False):
 
         _id3 = self.id3(file)
-    
+        if (_id3.performer == None or _id3.album == None or _id3.title == None):
+            return
+
         self.artist = self.add_update_artist(_id3)
         _id3.performer = self.artist
         self.album = self.add_update_album(_id3)
@@ -45,8 +69,7 @@ class mp3_file(object):
 
     def add_update_artist(self, id3):
     
-        if (id3.performer == None or id3.album == None or id3.title == None):
-            return
+
     
         if artist.objects(albumartist=id3.performer).first() == None:
             self.artist = artist()
@@ -68,6 +91,10 @@ class mp3_file(object):
         self.album.musicbrainz_albumid = id3.musicbrainz_albumid
         self.album.musicbrainz_albumartistid = id3.musicbrainz_albumartistid
         self.album.albumartist = id3.performer
+        self.get_coverart(self.album)
+        #if id3.musicbrainz_albumid:
+
+
         self.album.save()
         return self.album
     
@@ -86,6 +113,38 @@ class mp3_file(object):
         self.song.filepath = id3.filepath
         self.song.save()
         return self.song
+
+    def get_coverart(self, album):
+        path = "app/static/media/"
+        filename = "%s.jpg" % album.id
+
+        musicbrainzngs.set_useragent("python-musicplayer-flask","0.1","martinhinge@gmail.com")
+        covers = cache.get('covers')
+        if album.id in covers:
+            return
+
+        covers.append(album.id)
+        cache.set("covers", covers)
+
+
+        if not album.musicbrainz_albumid or album.coverimage:
+            return
+            #raise NameError('musicbrainz_albumid not set')
+
+        try:
+            data = musicbrainzngs.get_image_list(album.musicbrainz_albumid)
+        except Exception as e:
+            return e
+
+        if len(data['images']) == 0:
+            raise NameError('No images returned from service')
+
+        urllib.request.urlretrieve(data['images'][0]['image'], "%s%s" % (path, filename))
+        ci = open("%s%s" % (path, filename), 'rb')
+        album.coverimage.put(ci, content_type = 'image/jpeg')
+
+
+        return
 
 
     class id3(object):
@@ -143,9 +202,17 @@ class paginate():
 
 
 def add_collection(path):
+    covers = []
+
+    cache.set("covers", covers)
     for file in mp3_files(path):
-        mp3_obj = mp3_file(file)
-        print("%s    %s   -   %s" % (time.strftime("%I:%M:%S"), mp3_obj.song.songtitle, mp3_obj.artist.albumartist))
+        try:
+            mp3_obj = mp3_file(file)
+            print("%s    %s   -   %s" % (time.strftime("%I:%M:%S"), mp3_obj.song.songtitle, mp3_obj.artist.albumartist))
+        except Exception as e:
+            print(e)
+            print("Something's up with this file %s" % file)
+
 
 def mp3_files(path):
     for root, subFolders, files in os.walk(path, topdown=False):
@@ -156,20 +223,29 @@ def mp3_files(path):
 
 class musicbrainz(object):
 
-    def __init__(self, song):
-        self.song = song
-        musicbrainzngs.set_useragent(
-            "python-musicplayer-flask",
-            "0.1",
-            "martinhinge@gmail.com"
-            )
-        result = musicbrainzngs.get_artist_by_id(song.albumartist.musicbrainz_artistid)
-        print(result)
-        result = musicbrainzngs.get_recording_by_id(song.musicbrainz_trackid)
-        print(result)
+    def __init__(self, album):
+        self.album = album
+        self.path = "app/static/media/"
+        self.filename = "%s.jpg" % self.album.id
 
-        result = musicbrainzngs.get_release_by_id(song.album.musicbrainz_albumid)
-        print(result)
-        data = musicbrainzngs.get_cover_art_list(song.album.musicbrainz_albumid)
-        pass
+    def get_coverart(self):
+
+        musicbrainzngs.set_useragent("python-musicplayer-flask","0.1","martinhinge@gmail.com")
+
+
+        if not self.album.musicbrainz_albumid:
+            raise NameError('musicbrainz_albumid not set')
+
+        try:
+            data = musicbrainzngs.get_image_list(self.album.musicbrainz_albumid)
+        except Exception as e:
+            return e
+
+        if data['images'].len == 0:
+            raise NameError('No images returned from service')
+
+        urllib.request.urlretrieve(data['images'][0]['image'], "%s%s" % (self.path, self.filename))
+        ci = open("%s%s" % (self.path, self.filename), 'rb')
+        self.album.coverimage.put(ci, content_type = 'image/jpeg')
+        self.album.save()
 
