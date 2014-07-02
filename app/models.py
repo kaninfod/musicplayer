@@ -1,4 +1,3 @@
-
 from mutagenx.easyid3 import EasyID3, EasyID3KeyError
 import musicbrainzngs
 import os
@@ -40,8 +39,6 @@ class album(db.Document):
         return filename
 
 
-
-
 class song(db.Document):
     id = db.UUIDField()
     songtitle = db.StringField(required=False, unique_with=('albumartist','album','tracknumber'))
@@ -53,8 +50,8 @@ class song(db.Document):
     filepath = db.StringField(required=False)
 
 class mp3_file(object):
-    def __init__(self, file, update=False):
 
+    def __init__(self, file, update=False):
         _id3 = self.id3(file)
         if (_id3.performer == None or _id3.album == None or _id3.title == None):
             return
@@ -68,9 +65,7 @@ class mp3_file(object):
 
 
     def add_update_artist(self, id3):
-    
 
-    
         if artist.objects(albumartist=id3.performer).first() == None:
             self.artist = artist()
         else:
@@ -130,7 +125,6 @@ class mp3_file(object):
         if not album.musicbrainz_albumid or album.coverimage:
             return
             #raise NameError('musicbrainz_albumid not set')
-
         try:
             data = musicbrainzngs.get_image_list(album.musicbrainz_albumid)
         except Exception as e:
@@ -148,28 +142,32 @@ class mp3_file(object):
 
 
     class id3(object):
-
-
         def __init__(self, mp3_file):
-            self.performer = None                    #maps to: albumartist
-            self.album = None                      #maps to: albumtitle
-            self.title = None                      #maps to: songtitle
-            self.tracknumber = None                #maps to: same
-            self.artist = None                     #maps to:
-            self.musicbrainz_albumartistid = None  #maps to: same
-            self.musicbrainz_albumid = None        #maps to: same
-            self.musicbrainz_artistid = None       #maps to: same
-            self.musicbrainz_releasegroupid = None #maps to: same
-            self.musicbrainz_trackid = None        #maps to: same
-            self.totaltracks = None                #maps to: same
-            self.filepath = mp3_file
+            id3 = ['performer',
+                   'album',
+                   'title',
+                   'tracknumber',
+                   'artist',
+                   'musicbrainz_albumartistid',
+                   'musicbrainz_albumid',
+                   'musicbrainz_artistid',
+                   'musicbrainz_releasegroupid',
+                   'musicbrainz_trackid',
+                   'totaltracks']
+
+            mb_artist = ['country',
+                         'type']
+
+            mb_release = ['barcode',
+                          'country',
+                          'date']
 
 
             id3_file = EasyID3(mp3_file)
 
-            for item in self.__dict__:
+            for item in id3:
                 self.__dict__[item] = self.get_id3_item(item,id3_file)
-
+            self.filepath = mp3_file
 
         def get_id3_item(self, item, id3):
             try:
@@ -179,31 +177,9 @@ class mp3_file(object):
 
             return val
 
-class paginate():
-
-    def __init__(self, current_page=1, per_page=10):
-        self.current_page = int(current_page)
-        self.per_page = per_page
-        self.min = 0 if self.current_page == 1 else (self.current_page - 1)*self.per_page
-        self.max = self.current_page * self.per_page
-
-    @property
-    def total_documents(self):
-        return self._total_documents
-
-
-    @total_documents.setter
-    def total_documents(self, value):
-        self._total_documents = value
-        self.total_pages = int(ceil(self._total_documents / float(self.per_page)))
-        self.has_next = self.current_page < self.total_pages
-        self.has_previous = self.current_page > 1
-
-
-
 def add_collection(path):
-    covers = []
 
+    covers = []
     cache.set("covers", covers)
     for file in mp3_files(path):
         try:
@@ -249,3 +225,22 @@ class musicbrainz(object):
         self.album.coverimage.put(ci, content_type = 'image/jpeg')
         self.album.save()
 
+class paginate():
+
+    def __init__(self, current_page=1, per_page=10):
+        self.current_page = int(current_page)
+        self.per_page = per_page
+        self.min = 0 if self.current_page == 1 else (self.current_page - 1)*self.per_page
+        self.max = self.current_page * self.per_page
+
+    @property
+    def total_documents(self):
+        return self._total_documents
+
+
+    @total_documents.setter
+    def total_documents(self, value):
+        self._total_documents = value
+        self.total_pages = int(ceil(self._total_documents / float(self.per_page)))
+        self.has_next = self.current_page < self.total_pages
+        self.has_previous = self.current_page > 1

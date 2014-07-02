@@ -90,7 +90,7 @@ def url_for_other_page(**kwargs):
 def playsong():
     song_id = (request.args.get("song_id",""))
 
-    response = getdata(collection="song",query={'_id':ObjectId(song_id)})
+    response = models.song.objects(id=song_id).first()
     song_object = response.data[0]
     mediapath = "/home/martin/python/musicplayer/static/media/"
     songlink = "%s.mp3" % (song_object['_id'])
