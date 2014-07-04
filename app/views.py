@@ -2,14 +2,11 @@ from app import app, models
 from flask import render_template
 from flask import request
 from flask import url_for
-
+import os
 import time
 
+
 @app.route('/')
-def home():
-    return render_template('home.html')
-
-
 @app.route('/artists')
 @app.route('/artists/page/<page>')
 def artists(page=1):
@@ -20,7 +17,7 @@ def artists(page=1):
     else:
         data = models.artist.objects().order_by('albumartist')
 
-    p = models.paginate(page,10)   #why run this now
+    p = models.paginate(page,10)
     p.total_documents = data.count()
     data = data[p.min:p.max]
 
@@ -39,16 +36,23 @@ def albums(page=1, artist_id=None):
 
     if qstr:
         data = models.album.objects(albumtitle__icontains=qstr)
+        breadcrumb = [['All Artists','/artists'],
+                      ['Albums', '/albums'],
+                      ["Serach for '%s'" % qstr,'/albums/artist/%s' % artist_id]]
     elif artist_id:
         data = models.album.objects(albumartist=artist_id)
+        breadcrumb = [['All Artists','/artists'],
+                [data[0].albumartist.albumartist,'/albums/artist/%s' % artist_id]]
     else:
         data = models.album.objects()
+        breadcrumb = [['All Artists','/artists'],
+                ['Albums','#']]
 
     p = models.paginate(page,10)
     p.total_documents = data.count()
     data = data[p.min:p.max]
 
-    return render_template('albums.html', data=data, paginate=p, q=qstr)
+    return render_template('albums.html', data=data, paginate=p, q=qstr, breadcrumb=breadcrumb)
 
 @app.route('/songs')
 @app.route('/songs/album/<album_id>/page/<page>')
@@ -60,10 +64,22 @@ def songs(page=1, album_id=""):
 
     if qstr:
         data = models.song.objects(songtitle__icontains=qstr)
+        breadcrumb = [['All Artists','/artists'],
+              ['Albums', '/albums'],
+              ['Songs', '/songs'],
+              ["Serach for '%s'" % qstr,'']]
     elif album_id:
+
         data = models.song.objects(album=album_id).order_by('tracknumber')
+        breadcrumb = [  ['All Artists','/artists'],
+                        [data[0].artist,'/albums/artist/%s' % data[0].albumartist.id],
+                        [data[0].album.albumtitle,'#']
+                    ]
     else:
         data = models.song.objects()
+        breadcrumb = [  ['Artists','/artists'],
+                        ['Albums','/albums'],
+                        ['Songs','#']]
 
     p = models.paginate(page,10)
     p.total_documents = data.count()
@@ -78,7 +94,7 @@ def songs(page=1, album_id=""):
     except Exception as e:
         cover_url = "/static/img/generic_album_cover.jpg"
 
-    return render_template('songs.html', data=data, paginate=p, q=qstr, url=cover_url)
+    return render_template('songs.html', data=data, paginate=p, q=qstr, url=cover_url, breadcrumb=breadcrumb)
 
 def url_for_other_page(**kwargs):
     args = request.view_args.copy()
@@ -90,13 +106,13 @@ def url_for_other_page(**kwargs):
 def playsong():
     song_id = (request.args.get("song_id",""))
 
-    response = models.song.objects(id=song_id).first()
-    song_object = response.data[0]
-    mediapath = "/home/martin/python/musicplayer/static/media/"
-    songlink = "%s.mp3" % (song_object['_id'])
+    song_object = models.song.objects(id=song_id).first()
+    #song_object = response.data[0]
+    mediapath = "/home/martin/python/musicplayer/app/static/media/"
+    songlink = "%s.mp3" % (song_object.id)
     songpath = mediapath + songlink
 
-    filepath = song_object['filepath']
+    filepath = song_object.filepath
     try:
         os.symlink(filepath, songpath)
     except FileExistsError:
@@ -104,7 +120,7 @@ def playsong():
         os.symlink(filepath, songpath)
 
 
-    return render_template('songplay.html', title = song_object['songtitle'], song=songlink)
+    return render_template('songplay.html', title = song_object.songtitle, song=songlink)
 
 
 @app.route('/updatedb')
@@ -112,6 +128,12 @@ def updatedb():
 
     models.add_collection("/media/store/Music")
     return 0
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return 'This page does not exist', 404
+
+
 
 @app.route('/sg/<album_id>')
 def sg(album_id):
