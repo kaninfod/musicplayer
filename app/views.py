@@ -145,20 +145,6 @@ def sg(album_id):
     return render_template('showimg.html', img = "static/media/%s" % (url))
 
 
-
-
-@app.route('/dbstatus')
-def dbstatus():
-    try:
-        cache
-    except KeyError:
-        return "-1"
-        #return render_template("dbstatus.html", status= -1)
-    else:
-        return str(cache)
-        #return render_template("dbstatus.html", status=cache['songcounter'])
-
-
 @app.route('/slugify/<s>')
 def slugify(s):
     num_chars = 25
