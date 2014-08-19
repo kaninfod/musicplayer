@@ -1,0 +1,64 @@
+<script>
+        $(function() {
+            $( "#searchbox" ).keypress(function(event) {
+                if ( event.which == 13 ) {
+                    $.get( "/albumsList", {where: $("#searchbox").val()}, function(data) {
+                        $("#albumsList").html( data );
+                    })
+                }
+            });
+
+            $( "#loadNext" ).click(function() {
+                $.get( "/albumsList", {page: $("#loadNext").attr("lnk")}, function(data) {
+                    $("#albumsList").html( data );
+                    }   )
+            });
+
+            $( "#loadPrev" ).click(function() {
+                $.get( "/albumsList", {page: $("#loadPrev").attr("lnk")}, function(data) {
+                    $("#albumsList").html( data );
+                    })
+            });
+
+
+            if ($("#loadNext").attr("lnk") == 0) {
+                $("#loadNext").addClass("disabled");
+            } else {
+                $("#loadNext").removeClass("disabled") ;
+            }
+
+            if ($("#loadPrev").attr("lnk") == 0) {
+                $("#loadPrev").addClass("disabled");
+            } else {
+                $("#loadPrev").removeClass("disabled") ;
+            }
+
+
+
+        });
+</script>
+
+
+<div class="input-group input-group-sm">
+    <span class="input-group-addon">search</span>
+    <input id="searchbox" class="form-control"  >
+</div>
+
+
+
+<table class="table">
+    {% for item in data %}
+        <tr>
+            <td>{{ item.albumtitle }}</td>
+            <td><a href="/songs/{{ item.id }} ">View songs</a> </td>
+        </tr>
+    {% endfor %}
+</table>
+
+
+
+<ul class="pager">
+  <li id="loadPrev" lnk="{{ query.page.previous }}" class="previous"><a href="#">&larr; Previous</a></li>
+  <li id="loadNext" lnk="{{ query.page.next }}" class="next"><a href="#">Next &rarr;</a></li>
+</ul>
+{{ query.page }}

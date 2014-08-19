@@ -4,6 +4,8 @@ from flask import request
 from flask import url_for
 import os
 import time
+from mpd import MPDClient
+
 
 
 @app.route('/')

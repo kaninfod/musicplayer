@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+
+
+
+
+{% block content %}
+    <script type="text/javascript">
+    $(function() {
+
+        $( "#searchbox" ).keypress(function(event) {
+            if ( event.which == 13 ) {
+                $(location).attr('href',"/songs/page/1?q=" + $("#searchbox").val());
+            }
+        });
+
+        $( "#search" ).click(function() {
+            $(location).attr('href',"/songs/page/1?q=" + $("#searchbox").val());
+        });
+
+        $( ".song" ).click(function() {
+
+            alert("clicked")
+        });
+
+
+    });
+
+
+    </script>
+
+
+{% include 'searcher.html' %}
+
+
+<div class="panel panel-default">
+  <!-- Default panel contents -->
+  <div class="panel-heading">{{ data[0].artist }} / {{ data[0].album.albumtitle }}</div>
+  <div class="panel-body">
+    <img src="{{ url }}" class="img-responsive" alt="Responsive image" height="300" width="300">
+  </div>
+
+  <!-- Table -->
+<table class="table">
+    {% for item in data %}
+        <tr>
+            <td><span class="badge">{{ item.tracknumber }}</span></td>
+            <td>{{ item.songtitle }}</td>
+            <td><a id="{{ item.id }}" href="/playsong?song_id={{ item.id }}">Play</a> </td>
+            <td><a class="song" id="{{ item.id }}" href="#">PlayAjax</a> </td>
+            <td><a href="/sg/{{ item.album.id }} "><span class="label label-default">View Info</span></a> </td>
+        </tr>
+    {% endfor %}
+</table>
+
+</div>
+
+{% include 'pager.html' %}
+
+
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <script type="text/javascript">
+        $(function() {
+
+            $( "#searchbox" ).keypress(function(event) {
+                if ( event.which == 13 ) {
+                    $(location).attr('href',"/artists/page/1?q=" + $("#searchbox").val());
+                }
+            });
+
+            $( "#search" ).click(function() {
+                $(location).attr('href',"/artists/page/1?q=" + $("#searchbox").val());
+            });
+
+        });
+    </script>
+
+
+{% include 'searcher.html' %}
+
+
+    <table class="table">
+    {% for item in data %}
+        <tr>
+            <td><a href="/albums/artist/{{ item.id }} ">{{ item.albumartist }}</a> </td>
+        </tr>
+    {% endfor %}
+    </table>
+
+{% include 'pager.html' %}
+
+
+{% endblock %}
